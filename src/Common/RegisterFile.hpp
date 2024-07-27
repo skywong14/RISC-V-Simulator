@@ -44,12 +44,15 @@ public:
             throw std::runtime_error("Register is busy");
         }
     }
-
     // 只能由ROB通过CDB去更新，写后释放
     void write(int id, int val) {
         registers[id] = val;
         busy[id] = 0;
         tag[id] = 0;
+    }
+    void setTag(int reg, int tag_) {
+        tag[reg] = tag_;
+        busy[reg] = 1;
     }
     int getTag(int id) {
         return tag[id];
