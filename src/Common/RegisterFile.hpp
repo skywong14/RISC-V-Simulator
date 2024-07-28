@@ -9,23 +9,25 @@
 #include <cstring>
 #include <iostream>
 #include <iomanip>
-
+using uint = unsigned int;
 // Register File存放着将要向此寄存器更新值的ROB entry tag
 // 如果为0，代表此寄存器的值可用，否则，意味着该寄存器的值会被前面的指令更新，用该寄存器作为源操作数的需要等待CDB将更新后的值传输过来。
 class RegisterFile {
 private:
     static const int REG_NUM = 32;
-    Register<int> registers[REG_NUM], busy[REG_NUM], tag[REG_NUM];
+    Register<uint> registers[REG_NUM];
+    Register<int> tag[REG_NUM]; // 对应的 ROB 条目
+    Register<bool> busy[REG_NUM];  // 寄存器是否busy(等待写回)
 public:
     RegisterFile() {
         for (int i = 0; i < REG_NUM; ++i) {
             registers[i] = 0;
-            busy[i] = 0;
-            tag[i] = 0;
+            busy[i] = false;
+            tag[i] = -1;
         }
     }
 
-    void tick() {
+    void tickAll() {
         for (int i = 0; i < REG_NUM; i++){
             registers[i].tick();
             busy[i].tick();
@@ -33,26 +35,31 @@ public:
         }
     }
 
-    bool is_busy(int id) {
-        return busy[id];
+    bool is_busy(uint id) {
+        return id != 0 && busy[id];
     }
 
-    int read(int id) {
+    uint readRegister(uint id) {
         if (!busy[id]) {
             return id == 0 ? 0 : registers[id];
         } else {
             throw std::runtime_error("Register is busy");
         }
     }
-    // 只能由ROB通过CDB去更新，写后释放
-    void write(int id, int val) {
-        registers[id] = val;
-        busy[id] = 0;
-        tag[id] = 0;
+
+
+    void writeRegister(uint reg, int value, int robEntry) {
+        if (reg == 0) return;
+        registers[reg] = value;
+        if (busy[reg] && tag[reg] == robEntry) {
+            busy[reg] = false;
+            tag[reg] = -1;
+        }
     }
-    void setTag(int reg, int tag_) {
-        tag[reg] = tag_;
-        busy[reg] = 1;
+    void updateRegisterStatus(uint reg, int robEntry) {
+        if (reg == 0) return;
+        tag[reg] = robEntry;
+        busy[reg] = true;
     }
     int getTag(int id) {
         return tag[id];

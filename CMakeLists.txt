@@ -14,4 +14,6 @@ add_executable(RISC_V_Simulator
         src/Common/Memory.cpp
         src/Module/ALU.hpp
         src/Module/ReorderBuffer.hpp
-        src/Common/RegisterFile.hpp)
+        src/Common/RegisterFile.hpp
+        src/Module/ReservationStation.hpp
+        src/Module/LSB.hpp)

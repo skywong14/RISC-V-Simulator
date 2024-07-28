@@ -21,5 +21,4 @@ public:
     void operator=(T next) { nxt = next; }
 };
 
-
 #endif //RISC_V_SIMULATOR_REGISTER_HPP

@@ -33,10 +33,17 @@ public:
     uint funct3, funct7;
     uint rs1, rs2;
     uint imm;
-    Decoder(uint32_t input) : instructionNumber(input) {
-        decode();
+    Decoder(uint input) : instructionNumber(input) {
+        parser();
+    }
+    void input(uint input){
+        instructionNumber = input;
+        parser();
     }
     void decode(){
+
+    }
+    void parser(){
         uint opcodeNum = instructionNumber & 0x7F; //0-6
         rd = (instructionNumber >> 7) & 0x1F;  //7-11
         funct3 = (instructionNumber >> 12) & 0x7; //12-14
