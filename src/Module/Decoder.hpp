@@ -10,21 +10,82 @@
 #include <cstring>
 using uint = unsigned int;
 
-enum class Opcode{
-    LUI    = 0x37,    AUIPC  = 0x17,    JAL    = 0x6F,    JALR   = 0x67,
-    BEQ    = 0x63,    BNE    = 0x63,    BLT    = 0x63,    BGE    = 0x63,
-    BLTU   = 0x63,    BGEU   = 0x63,    LB     = 0x03,    LH     = 0x03,
-    LW     = 0x03,    LBU    = 0x03,    LHU    = 0x03,    SB     = 0x23,
-    SH     = 0x23,    SW     = 0x23,    ADDI   = 0x13,    SLTI   = 0x13,
-    SLTIU  = 0x13,    XORI   = 0x13,    ORI    = 0x13,    ANDI   = 0x13,
-    SLLI   = 0x13,    SRLI   = 0x13,    SRAI   = 0x13,    ADD    = 0x33,
-    SUB    = 0x33,    SLL    = 0x33,    SLT    = 0x33,    SLTU   = 0x33,
-    XOR    = 0x33,    SRL    = 0x33,    SRA    = 0x33,    OR     = 0x33,
-    AND    = 0x33
+enum class Opcode {
+    LUI, AUIPC, JAL, JALR,
+    BEQ, BNE, BLT, BGE,
+    BLTU, BGEU, LB, LH,
+    LW, LBU, LHU, SB,
+    SH, SW, ADDI, SLTI,
+    SLTIU, XORI, ORI, ANDI,
+    SLLI, SRLI, SRAI, ADD,
+    SUB, SLL, SLT, SLTU,
+    XOR, SRL, SRA, OR,
+    AND
 };
-// BEQ 0x63; LB 0x03; SB 0x23; ADDI 0x13; ADD 0x33;
+uint OpValue(Opcode opcode) {
+    switch (opcode) {
+        case Opcode::LUI: return 0x37;
+        case Opcode::AUIPC: return 0x17;
+        case Opcode::JAL: return 0x6F;
+        case Opcode::JALR: return 0x67;
+        case Opcode::BEQ: return 0x63;
+        case Opcode::BNE: return 0x63;
+        case Opcode::BLT: return 0x63;
+        case Opcode::BGE: return 0x63;
+        case Opcode::BLTU: return 0x63;
+        case Opcode::BGEU: return 0x63;
+        case Opcode::LB: return 0x03;
+        case Opcode::LH: return 0x03;
+        case Opcode::LW: return 0x03;
+        case Opcode::LBU: return 0x03;
+        case Opcode::LHU: return 0x03;
+        case Opcode::SB: return 0x23;
+        case Opcode::SH: return 0x23;
+        case Opcode::SW: return 0x23;
+        case Opcode::ADDI: return 0x13;
+        case Opcode::SLTI: return 0x13;
+        case Opcode::SLTIU: return 0x13;
+        case Opcode::XORI: return 0x13;
+        case Opcode::ORI: return 0x13;
+        case Opcode::ANDI: return 0x13;
+        case Opcode::SLLI: return 0x13;
+        case Opcode::SRLI: return 0x13;
+        case Opcode::SRAI: return 0x13;
+        case Opcode::ADD: return 0x33;
+        case Opcode::SUB: return 0x33;
+        case Opcode::SLL: return 0x33;
+        case Opcode::SLT: return 0x33;
+        case Opcode::SLTU: return 0x33;
+        case Opcode::XOR: return 0x33;
+        case Opcode::SRL: return 0x33;
+        case Opcode::SRA: return 0x33;
+        case Opcode::OR: return 0x33;
+        case Opcode::AND: return 0x33;
+        default: return -1; // Unknown opcode
+    }
+}
+/*
+ * 根据给出的每个指令的opcode，以下是它们对应的目标地址类型：
 
-class Decoder{
+1. **LUI (0x37)**：将立即数左移 12 位后存放在目标寄存器中。
+2. **AUIPC (0x17)**：将当前 PC 加上立即数左移 12 位后存放在目标寄存器中。
+3. **JAL (0x6F)**：将当前地址加上偏移量存放在目标寄存器中，并跳转到新的地址执行。
+4. **JALR (0x67)**：将当前地址加上立即数后存放在目标寄存器中，并跳转到新的地址执行。
+5. **BEQ, BNE, BLT, BGE, BLTU, BGEU (0x63)**：这些条件分支指令的目标地址是跳转到的目标地址（PC相对寻址）。
+6. **LB, LH, LW, LBU, LHU (0x03)**：从内存中加载数据，目标地址是存放加载数据的目标寄存器。
+7. **SB, SH, SW (0x23)**：将寄存器中的数据存储到内存中，目标地址是存储的内存地址。
+8. **ADDI, SLTI, SLTIU, XORI, ORI, ANDI, SLLI, SRLI, SRAI (0x13)**：对一个寄存器和一个立即数进行操作，目标地址是存放操作结果的寄存器。
+9. **ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND (0x33)**：对两个寄存器中的数据进行操作，目标地址是存放操作结果的寄存器。
+
+这些目标地址描述了每个指令在执行后数据存放的位置，是RISC-V指令集中基本的执行规则。
+ */
+struct Destination{
+    int type; // 0: register 1:memory with imm(+0) 2: memory with imm + reg[rs1]
+    uint imm, rs1;
+    Destination():type(0), imm(0), rs1(0) {}
+};
+
+class Instruction{
 private:
     uint instructionNumber;
 public:
@@ -33,15 +94,10 @@ public:
     uint funct3, funct7;
     uint rs1, rs2;
     uint imm;
-    Decoder(uint input) : instructionNumber(input) {
-        parser();
-    }
-    void input(uint input){
+    Instruction(): Instruction(0) {}
+    Instruction(uint input) {
         instructionNumber = input;
         parser();
-    }
-    void decode(){
-
     }
     void parser(){
         uint opcodeNum = instructionNumber & 0x7F; //0-6
@@ -228,7 +284,10 @@ public:
                 break;
         }
     }
-
+    void input(uint input){
+        instructionNumber = input;
+        parser();
+    }
     void debug() {
         std::cout << "---------------" << std::endl;
         std::cout << "Opcode: " << std::bitset<7>(static_cast<uint32_t>(opcode)) << std::endl;
@@ -242,5 +301,21 @@ public:
     }
 };
 
+/*
+class Decoder{
+public:
+    Instruction instruction;
+    Decoder() = default;
+    void input(uint input) { instruction.input(input); }
+    void decode(){
+    }
+    void Run(){
+
+    }
+    void tick(){
+        Run();
+    }
+};
+*/
 
 #endif //RISC_V_SIMULATOR_DECODER_HPP

@@ -11,19 +11,28 @@
 using uint = unsigned int;
 
 class Memory{
+private:
     static const int MEMORY_SIZE = 0x400000;
+    unsigned char mem[MEMORY_SIZE];
+public:
     Memory();
     bool check_addr(uint addr);
 
-    // 读取 32 位（4 字节）数据
-    int read_word(uint addr);
+    uint read_word(uint addr);
 
-    // 写入 32 位（4 字节）数据到指定地址
-    void write_word(uint addr, int imm);
+    uint read_half_word(uint addr);
+
+    uint read_byte(uint addr);
+
+    void write_word(uint addr, uint imm);
+
+    void write_half_word(uint addr, uint imm);
+
+    void write_byte(uint addr, uint imm);
 
     void display_memory(uint beg_addr, uint end_addr);
-private:
-    unsigned char mem[MEMORY_SIZE];
+
+    void load_memory(std::istream &is);
 };
 
 

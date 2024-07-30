@@ -3,13 +3,14 @@
 //
 #include <iostream>
 #include "../Common/Memory.hpp"
-#include "../Common/Decoder.hpp"
+#include "Decoder.hpp"
 #include "CPU.hpp"
 
 
 int main() {
-    Memory memory;
-    memory.load_memory(std::cin);
-
+    Memory mem;
+    mem.load_memory(std::cin);
+    CPU cpu(mem);
+    cpu.Run();
     return 0;
 }

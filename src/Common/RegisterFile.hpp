@@ -46,9 +46,7 @@ public:
             throw std::runtime_error("Register is busy");
         }
     }
-
-
-    void writeRegister(uint reg, int value, int robEntry) {
+    void writeRegister(uint reg, uint value, uint robEntry) {
         if (reg == 0) return;
         registers[reg] = value;
         if (busy[reg] && tag[reg] == robEntry) {
@@ -61,7 +59,7 @@ public:
         tag[reg] = robEntry;
         busy[reg] = true;
     }
-    int getTag(int id) {
+    int getTag(uint id) {
         return tag[id];
     }
 
