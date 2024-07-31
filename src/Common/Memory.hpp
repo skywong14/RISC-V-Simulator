@@ -32,7 +32,7 @@ public:
 
     void display_memory(uint beg_addr, uint end_addr);
 
-    void load_memory(std::istream &is);
+    void load_memory_from_stream(std::istream &is);
 };
 
 

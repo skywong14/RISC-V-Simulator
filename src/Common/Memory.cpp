@@ -41,7 +41,7 @@ uint Memory::read_byte(uint addr)  {
     return *(char *) (mem + addr);
 }
 
-void Memory::load_memory(std::istream &is) {
+void Memory::load_memory_from_stream(std::istream &is) {
     // 如果输入以@开头，那么移动吸入指针到@后的地址
     // 否则，将输入流中的数据解释为16进制数，存入内存中
     std::string line;
@@ -59,6 +59,7 @@ void Memory::load_memory(std::istream &is) {
 
 // 从地址 beg_addr 到 end_addr 的内存数据
 void Memory::display_memory(uint beg_addr, uint end_addr) {
+    std::cout << "Memory: from " << beg_addr << " to " << end_addr << std::endl;
     for (uint i = beg_addr; i <= end_addr; i++) {
         std::cout << std::hex << (unsigned) mem[i] << " ";
     }

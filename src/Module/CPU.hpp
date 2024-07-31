@@ -21,7 +21,7 @@ public:
     ALU alu;
     BranchPredictor bp;
     ReservationStation rs;
-    CPU(Memory& mem): bp(), lsb(mem), rf(),  alu(), rs(), iq(rs, rob, lsb, bp), rob(){
+    explicit CPU(Memory& mem): iq(rs, rob, lsb, bp), lsb(mem), rob(rs, bp, lsb, iq, rf), rf(), alu(), bp(), rs(alu, rf, rob, lsb){
         clock = 0;
         halted = false;
     }
@@ -29,13 +29,15 @@ public:
     void Run(){
         while (!halted){
             clock++;
+            std::cout<<"-----Clock "<<clock<<"-----"<<std::endl;
             iq.tick();
             lsb.tick();
             rob.tick();
             rf.tickAll();
+            bp.tick();
+            rs.tick();
+            alu.tick();
         }
-
-
     }
 };
 

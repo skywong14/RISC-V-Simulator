@@ -12,22 +12,11 @@ class LSB{
 private:
     Memory& mem;
 public:
-    LSB(Memory& mem_): mem(mem_){}
-    uint loadInstruction(uint PC){
-        return mem.read_word(PC);
-    }
-    void storeInstruction(uint PC, uint instruction){
-        mem.write_word(PC, instruction);
-    }
-    void storeData(uint addr, uint value){
-        mem.storeData(addr, value);
-    }
-    uint loadData(uint addr){
-        return mem.loadData(addr);
-    }
-    void tick(){
-
-    }
+    LSB(Memory& mem_);
+    uint loadInstruction(uint PC);
+    void store(uint length, uint addr, uint value);
+    uint load(uint length, uint addr, uint unsigned_flag);
+    void tick();
 };
 
 #endif //RISC_V_SIMULATOR_LSB_HPP
