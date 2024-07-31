@@ -30,7 +30,9 @@ private:
     RegisterFile& rf;
     InstructionQueue& iq;
 public:
-    static const int Size = 10;
+    Register<bool> haltFlag;
+    Register<bool> flushFlag;
+    static const int Size = 1;
     struct RoBEntry {
         Register<RoBType> type;  // 计算指令
         Register<uint> dest; // 目的寄存器 or 目标内存地址
@@ -52,6 +54,7 @@ public:
     RoB(ReservationStation& rs_, BranchPredictor& bp_, LSB& lsb_, InstructionQueue& iq_, RegisterFile& rf_);
 
     bool available();
+    bool Halted();
 
     //insert robEntry to ReservationStation
     uint insertEntry(RoBType type_, uint value_, uint dest_, uint PC);
@@ -63,9 +66,12 @@ public:
 
     void updateEntry(uint robEntry);
     // 提交条目
+    void NotifyFlush();
     void commitEntry();
     void tickRegister();
     void tick();
+    void flush();
+    void flushAll();
 
     void commitDebug();
 

@@ -18,6 +18,7 @@ private:
     Register<uint> registers[REG_NUM];
     Register<int> tag[REG_NUM]; // 对应的 ROB 条目
     Register<bool> busy[REG_NUM];  // 寄存器是否busy(等待写回)
+    Register<bool> flushFlag; // true if flush is needed
 public:
     RegisterFile() {
         for (int i = 0; i < REG_NUM; ++i) {
@@ -27,18 +28,38 @@ public:
         }
     }
 
+    void NotifyFlush() {
+        flushFlag = true;
+    }
+
     void tickAll() {
+        flushFlag.tick();
         for (int i = 0; i < REG_NUM; i++){
             registers[i].tick();
             busy[i].tick();
             tag[i].tick();
         }
     }
+    void flush(){
+        for (int i = 0; i < REG_NUM; ++i) {
+            registers[i] = 0;
+            busy[i] = false;
+            tag[i] = 0;
+        }
+        flushFlag = false;
+    }
+    void tick(){
+        if (flushFlag) flush();
+        //Run;
+        tickAll();
+    }
 
     bool is_busy(uint id) {
         return id != 0 && busy[id];
     }
-
+    uint forceReadRegister(uint id) {
+        return id == 0 ? 0 : registers[id];
+    }
     uint readRegister(uint id) {
         if (!busy[id]) {
             return id == 0 ? 0 : registers[id];
@@ -70,10 +91,13 @@ public:
                                               "s8", "s9", "s10", "s11", "t3", "t4", "t5", "t6"};
         std::cout << "Register File Status:\n";
         for (int i = 0; i < REG_NUM; ++i) {
+            //统一用16进制输出val，并且8位对齐
             std::cout << "  R" << i << " (" << rf_name[i] << "): "
-                      << "Value=" << registers[i]
-                      << ", Valid=" << (busy[i] ? "true" : "false")
-                      << ", Tag=" << tag[i] << "\n";
+                      << "Val=0x" << std::hex << std::setw(8) << std::setfill('0') << registers[i]
+                      << ", busy=" << (busy[i] ? "true" : "false")
+                      << ", Tag=" << std::dec <<tag[i] << "\n";
+            //恢复十进制
+
         }
     }
 };

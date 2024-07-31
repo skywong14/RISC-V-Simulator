@@ -8,6 +8,10 @@
 #include "InstructionQueue.hpp"
 #include "LSB.hpp"
 #include "ALU.hpp"
+#include "BranchPredictor.hpp"
+#include "ReservationStation.hpp"
+#include "ReorderBuffer.hpp"
+#include "Common/RegisterFile.hpp"
 
 class CPU{
 private:
@@ -25,11 +29,15 @@ public:
         clock = 0;
         halted = false;
     }
-
+    void Exit(){
+//        std::cout<<"Exit~"<<std::endl;
+        halted = true;
+    }
     void Run(){
+        extern int commit_cnt;
         while (!halted){
             clock++;
-            std::cout<<"-----Clock "<<clock<<"-----"<<std::endl;
+//            std::cout<<"-----Clock "<<clock<<"-----"<<std::endl;
             iq.tick();
             lsb.tick();
             rob.tick();
@@ -37,8 +45,11 @@ public:
             bp.tick();
             rs.tick();
             alu.tick();
-            std::cout<<std::endl<<std::endl;
-            if (clock > 100) halted = true;
+//            rob.printStatus();
+//            rf.debug();
+//            std::cout<<std::endl<<std::endl;
+            if (rob.Halted()) Exit();
+//            if (commit_cnt > 18) halted = true;
         }
     }
 };

@@ -16,7 +16,7 @@ class ReservationStation;
 class RoB;
 
 class InstructionQueue{
-    static const int queueSize = 8;
+    static const int queueSize = 1;
     Register<uint> head, tail;
     Register<uint> instructions[queueSize];
     Register<uint> curPC[queueSize];
@@ -29,6 +29,7 @@ class InstructionQueue{
 
 public:
     Register<uint> PC;
+    Register<uint> flushPC;
 
     InstructionQueue(ReservationStation& rs_, RoB& rob_, LSB& lsb_, BranchPredictor& bp_);
 
@@ -37,8 +38,10 @@ public:
 
     void tickRegister();
     void flush();
+    void NotifyFlush();
     void newInstruction();
     void executeInstruction();
+    void flushOldPC(uint value);
 
     void Run();
     void tick();

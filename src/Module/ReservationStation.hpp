@@ -29,7 +29,8 @@ private:
     RoB& rob;
     LSB& lsb;
 public:
-    static const int StationSize = 5;
+    Register<bool> flushFlag;
+    static const int StationSize = 1;
     struct RSEntry{
         Register<CalcType> calcType;
         Register<Opcode> opcode;
@@ -55,6 +56,10 @@ public:
     void updateEntry(uint robEntry, uint value);
 
     void tick();
+    void NotifyFlush();
+    void flush();
+
+    void PrintState();
 };
 
 

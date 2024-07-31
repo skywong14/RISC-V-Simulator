@@ -20,7 +20,7 @@ enum class Opcode {
     SLLI, SRLI, SRAI, ADD,
     SUB, SLL, SLT, SLTU,
     XOR, SRL, SRA, OR,
-    AND
+    AND, UNKNOWN
 };
 uint OpValue(Opcode opcode);
 std::string toString(Opcode opcode);
@@ -97,7 +97,7 @@ public:
                     default:
                         throw std::runtime_error("Unknown funct3 for branch instruction");
                 }
-                imm = ((instructionNumber >> 8) & 0xF) | // imm[4:1]
+                imm = ((instructionNumber >> 8) & 0xF) << 1 | // imm[4:1]
                       ((instructionNumber >> 25) << 5) | // imm[10:5]
                       ((instructionNumber >> 7) & 0x1) << 11 | // imm[11]
                       ((instructionNumber >> 31) << 12); // imm[12]
@@ -227,8 +227,7 @@ public:
                 imm = 0;
                 break;
             default:
-                std::cout << "Instruction: " << std::bitset<32>(instructionNumber) << std::endl;
-                throw std::runtime_error("Unknown Opcode");
+                opcode = Opcode::UNKNOWN;
                 break;
         }
     }
@@ -238,7 +237,7 @@ public:
     }
     void debug(uint curPC = 0) {
         std::cout << "Instruction: " << std::bitset<32>(instructionNumber) << std::endl;
-        std::cout << "    PC: " << curPC << std::endl;
+        std::cout << "    PC: 0x"  << std::hex << curPC << std::endl << std::dec;
         std::cout << "    Opcode: " << toString(opcode)  << std::endl;
         std::cout << "    rd: " << std::bitset<5>(rd) << std::endl;
         std::cout << "    funct3: " << std::bitset<3>(funct3) << std::endl;

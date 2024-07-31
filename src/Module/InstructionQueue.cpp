@@ -20,9 +20,12 @@ uint InstructionQueue::readPC()  {
 void InstructionQueue::writePC(uint value) {
     PC = value;
 }
+void InstructionQueue::flushOldPC(uint value) {
+    flushPC = value;
+}
 
 void InstructionQueue::tickRegister() {
-    head.tick(); tail.tick(); PC.tick();
+    head.tick(); tail.tick(); PC.tick(); flushPC.tick();
     for (int i = 0; i < queueSize; i++) {
         busy[i].tick();
         instructions[i].tick();
@@ -33,9 +36,9 @@ void InstructionQueue::tickRegister() {
 
 void InstructionQueue::flush() {
     head = 0; tail = 0;
-    PC = 0;
     for (int i = 0; i < queueSize; i++)
         busy[i] = false;
+    PC = flushPC;
     tickRegister();
 }
 
@@ -43,10 +46,16 @@ void InstructionQueue::newInstruction() {
     if (!busy[tail]) {
         busy[tail] = true;
         uint cur_instruction = lsb.loadInstruction(PC);
+
         instructions[tail] = cur_instruction;
         curPC[tail] = PC;
-        std::cout << "PC:" << PC << " New Instruction:" << std::bitset<32>(lsb.loadInstruction(PC)) << std::endl;
+//        std::cout << "PC:" << PC << " New Instruction:" << std::bitset<32>(lsb.loadInstruction(PC)) << std::endl;
         Instruction instruction(cur_instruction);
+        if (instruction.opcode == Opcode::UNKNOWN) {
+//            std::cout<<"{Warning} empty Instruction at PC: "<<std::hex<<PC<<std::endl<<std::dec;
+            busy[tail] = false;
+            return;
+        }
         if (OpValue(instruction.opcode) == 0x63) {
             // Predict Branch
             bool jumpFlag = bp.predict(PC);
@@ -57,13 +66,12 @@ void InstructionQueue::newInstruction() {
                 PC = PC + 4;
             }
         } else if (instruction.opcode == Opcode::JAL){
-            std::cout<<instruction.imm<<','<<toTwosComplement(instruction.imm)<<std::endl;
             PC = PC + toTwosComplement(instruction.imm);
         } else {
             PC = PC + 4;
         }
         tail = (tail + 1) % queueSize;
-        std::cout<<"Next PC: "<<PC.current()<<std::endl;
+//        std::cout<<"Next PC: "<<PC.current()<<std::endl;
     }
 }
 
@@ -72,11 +80,15 @@ void InstructionQueue::executeInstruction(){
     if (!(rob.available() && rs.available())) return; // wait
     uint robEntry;
     Instruction instruction(instructions[head]);
-    instruction.debug(PC);
     uint cur_PC = curPC[head];
-    if (OpValue(instruction.opcode) == 0x63) {
+//    instruction.debug(cur_PC);
+    if (instructions[head] == 0x0ff00513) {
+        // Exit command
+//        std::cout<< "Exit Command Here" << std::endl;
+        robEntry = rob.insertEntry(RoBType::EXIT, 0, 0, cur_PC);
+    } else if (OpValue(instruction.opcode) == 0x63) {
         // Predict Branch
-        robEntry = rob.insertEntry(RoBType::BRANCH, jump[head], PC + instruction.imm, cur_PC);
+        robEntry = rob.insertEntry(RoBType::BRANCH, jump[head], cur_PC + instruction.imm, cur_PC);
     } else if (OpValue(instruction.opcode) == 0x23){
         // Store
         if (instruction.opcode == Opcode::SB) {
@@ -87,9 +99,9 @@ void InstructionQueue::executeInstruction(){
             robEntry = rob.insertEntry(RoBType::STOREW, 0, instruction.rd, cur_PC);
         }
     } else if (instruction.opcode == Opcode::JALR){
-        robEntry = rob.insertEntry(RoBType::JALR, PC + 4, instruction.rd, cur_PC);
+        robEntry = rob.insertEntry(RoBType::JALR, 0, instruction.rd, cur_PC);
     } else if (instruction.opcode == Opcode::JAL){
-        robEntry = rob.insertEntry(RoBType::REGISTER, PC + 4, instruction.rd, cur_PC);
+        robEntry = rob.insertEntry(RoBType::REGISTER, cur_PC + 4, instruction.rd, cur_PC);
 //        PC = PC + toTwosComplement(instruction.imm);
     }  else {
         robEntry = rob.insertEntry(RoBType::REGISTER, 0, instruction.rd, cur_PC);
@@ -97,16 +109,16 @@ void InstructionQueue::executeInstruction(){
     //todo
     switch (instruction.opcode) {
         case Opcode::LUI:
-            rob.updateEntry(robEntry, static_cast<uint>(instruction.imm << 12));
+            rob.updateEntry(robEntry, static_cast<uint>(instruction.imm));
             break;
         case Opcode::AUIPC:
-            rob.updateEntry(robEntry, PC + static_cast<uint>(instruction.imm << 12));
+            rob.updateEntry(robEntry, cur_PC + static_cast<uint>(instruction.imm));
             break;
         case Opcode::JAL:
             rob.updateEntry(robEntry);
             break;
         case Opcode::JALR:
-            rob.updateEntry(robEntry);
+            rs.insertEntry(CalcType::Add, DataSource::RegNImm, instruction.rs1, instruction.imm, 0, robEntry);
             break;
         case Opcode::BEQ:
             rs.insertEntry(CalcType::Equal, DataSource::TwoReg, instruction.rs1, instruction.rs2, 0, robEntry);
@@ -215,14 +227,16 @@ void InstructionQueue::executeInstruction(){
 }
 
 void InstructionQueue::Run() {
-//    std::cout<<"InstructionQueue::executeInstruction()"<<std::endl;
     executeInstruction();
-//    std::cout<<"InstructionQueue::newInstruction()"<<std::endl;
     newInstruction();
 }
 
 void InstructionQueue::tick() {
     tickRegister();
     Run();
+}
+
+void InstructionQueue::NotifyFlush() {
+    flush();
 }
 
