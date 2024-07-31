@@ -27,6 +27,7 @@ void RoB::tickRegister(){
 void RoB::updateStoreEntry(uint robEntry, uint value, uint dest) {
     // STORE
 //    std::cout<<"[Store] value: "<<value<<" dest: "<<dest<<std::endl;
+    entries[robEntry].lsbEntry = entries[robEntry].value;
     entries[robEntry].value = value;
     entries[robEntry].dest = dest;
     entries[robEntry].ready = true;
@@ -68,15 +69,21 @@ void RoB::commitEntry() {
                 break;
             case RoBType::STOREB:
                 //store value
+                if (!lsb.ableToStore(entries[head].lsbEntry)) return; //wait
                 lsb.store(1, entries[head].dest, entries[head].value);
+                lsb.storeSuccess(entries[head].lsbEntry);
                 break;
             case RoBType::STOREH:
                 //store value
+                if (!lsb.ableToStore(entries[head].lsbEntry)) return; //wait
                 lsb.store(2, entries[head].dest, entries[head].value);
+                lsb.storeSuccess(entries[head].lsbEntry);
                 break;
             case RoBType::STOREW:
                 //store value
+                if (!lsb.ableToStore(entries[head].lsbEntry)) return; //wait
                 lsb.store(4, entries[head].dest, entries[head].value);
+                lsb.storeSuccess(entries[head].lsbEntry);
                 break;
             case RoBType::REGISTER:
                 rf.writeRegister(entries[head].dest, entries[head].value, head);
@@ -204,4 +211,8 @@ void RoB::flushAll() {
 
 bool RoB::Halted() {
     return haltFlag;
+}
+
+uint RoB::getValue(uint robEntry) {
+    return entries[robEntry].value;
 }

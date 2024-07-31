@@ -93,20 +93,26 @@ void ReservationStation::Run() {
                     // load step 1
                     data[i].A = alu.Execute(CalcType::Add, data[i].Vj, data[i].A, data[i].robEntry);
                     data[i].dataSource = DataSource::Imm;
+                    data[i].Vj = rob.getValue(data[i].robEntry); // the lsbEntryId
 //                    std::cout<<"A: "<<data[i].A.current()<<std::endl;
                 } else {
                     // load step 2
-                    uint length = 0;
-                    if (static_cast<int>((CalcType)data[i].calcType) == 14 || static_cast<int>((CalcType)data[i].calcType) == 17) length = 1;
-                    else if (static_cast<int>((CalcType)data[i].calcType) == 15 || static_cast<int>((CalcType)data[i].calcType) == 18) length = 2;
-                    else if (static_cast<int>((CalcType)data[i].calcType) == 16) length = 4;
-                    uint unsignedFlag = 0;
-                    if (static_cast<int>((CalcType)data[i].calcType) == 17 || static_cast<int>((CalcType)data[i].calcType) == 18) unsignedFlag = 1;
-                    result = lsb.load(length, data[i].A, unsignedFlag);
-//                    std::cout<<"Result: "<<result<<std::endl;
-                    rob.updateEntry(data[i].robEntry, result);
-                    data[i].busy = false;
-                    // step 2 done
+                    //now Vj stores the lsbEntryId
+                    if (lsb.ableToLoad(data[i].Vj)) {
+                        uint length = 0;
+                        if (static_cast<int>((CalcType)data[i].calcType) == 14 || static_cast<int>((CalcType)data[i].calcType) == 17) length = 1;
+                        else if (static_cast<int>((CalcType)data[i].calcType) == 15 || static_cast<int>((CalcType)data[i].calcType) == 18) length = 2;
+                        else if (static_cast<int>((CalcType)data[i].calcType) == 16) length = 4;
+                        uint unsignedFlag = 0;
+                        if (static_cast<int>((CalcType)data[i].calcType) == 17 || static_cast<int>((CalcType)data[i].calcType) == 18) unsignedFlag = 1;
+                        result = lsb.load(length, data[i].A, unsignedFlag);
+                        lsb.loadSuccess(data[i].Vj);
+//                      std::cout<<"Result: "<<result<<std::endl;
+                        rob.updateEntry(data[i].robEntry, result);
+                        data[i].busy = false;
+                        // step 2 done
+                    }
+                    // else wait for lsb
                 }
             } else {
                 // store

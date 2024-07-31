@@ -40,9 +40,10 @@ public:
         Register<bool> ready; // 结果是否已准备好
         Register<bool> busy;
         Register<uint> PC;  // 额外内容（如果需要）
+        Register<uint> lsbEntry; // 额外内容（如果需要）
         void tick() {
             dest.tick(); value.tick(); ready.tick();
-            PC.tick(); type.tick(); busy.tick();
+            PC.tick(); type.tick(); busy.tick(); lsbEntry.tick();
         }
         RoBEntry() {
             dest = 0; busy = false; ready = false; value = 0;
@@ -72,6 +73,8 @@ public:
     void tick();
     void flush();
     void flushAll();
+
+    uint getValue(uint robEntry);
 
     void commitDebug();
 

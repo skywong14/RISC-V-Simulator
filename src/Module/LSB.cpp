@@ -16,6 +16,7 @@ uint LSB::load(uint length, uint addr, uint unsigned_flag) {
 
 void LSB::tick() {
     if (flushFlag) flush();
+    Run();
     tickRegister();
 }
 
@@ -40,6 +41,8 @@ void LSB::tickRegister() {
         mode[i].tick();
         addr[i].tick();
         length[i].tick();
+        ready[i].tick();
+        value[i].tick();
     }
 }
 
@@ -60,4 +63,57 @@ void LSB::NotifyFlush() {
 
 bool LSB::available() {
     return !busy[tail];
+}
+
+uint LSB::insertLoadCommand(uint unsignedFlag_, uint addr_, uint length_) {
+    if (!available()) throw std::runtime_error("Insert Load Command to Full LSB");
+    busy[tail] = true;
+    if (unsignedFlag_) mode[tail] = 1;
+    else mode[tail] = 2;
+    addr[tail] = addr_;
+    ready[tail] = false;
+    length[tail] = length_;
+    uint ret = tail;
+    tail = (tail + 1) % BufferSize;
+    return ret;
+}
+
+uint LSB::insertStoreCommand(uint addr_, uint length_) {
+    if (!available()) throw std::runtime_error("Insert Store Command to Full LSB");
+    busy[tail] = true;
+    mode[tail] = 0;
+    addr[tail] = addr_;
+    ready[tail] = false;
+    length[tail] = length_;
+    uint ret = tail;
+    tail = (tail + 1) % BufferSize;
+    return ret;
+}
+
+void LSB::Run() {
+    // checkHead
+    if (!busy[head]) return;
+    if (busy[head] && ready[head]) {
+        busy[head] = false; ready[head] = false;
+        head = (head + 1) % BufferSize;
+    }
+}
+
+bool LSB::ableToLoad(uint entryId) {
+    if (head == entryId) return true;
+    return false;
+}
+
+
+void LSB::loadSuccess(uint entryId) {
+    ready[entryId] = true;
+}
+
+bool LSB::ableToStore(uint entryId) {
+    if (head == entryId) return true;
+    return false;
+}
+
+void LSB::storeSuccess(uint entryId) {
+    ready[entryId] = true;
 }

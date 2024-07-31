@@ -13,13 +13,6 @@ InstructionQueue::InstructionQueue(ReservationStation &rs_, RoB &rob_, LSB &lsb_
 }
 
 
-uint InstructionQueue::readPC()  {
-    return PC;
-}
-
-void InstructionQueue::writePC(uint value) {
-    PC = value;
-}
 void InstructionQueue::flushOldPC(uint value) {
     flushPC = value;
 }
@@ -91,22 +84,48 @@ void InstructionQueue::executeInstruction(){
         robEntry = rob.insertEntry(RoBType::BRANCH, jump[head], cur_PC + instruction.imm, cur_PC);
     } else if (OpValue(instruction.opcode) == 0x23){
         // Store
+        // lsbEntryId stored in rob.value
+        if (!lsb.available()) return; // wait
+        uint lsbEntryId;
         if (instruction.opcode == Opcode::SB) {
-            robEntry = rob.insertEntry(RoBType::STOREB, 0, instruction.rd, cur_PC);
+            lsbEntryId = lsb.insertStoreCommand(instruction.rs1, 1);
+            robEntry = rob.insertEntry(RoBType::STOREB, lsbEntryId, instruction.rd, cur_PC);
         } else if (instruction.opcode == Opcode::SH) {
-            robEntry = rob.insertEntry(RoBType::STOREH, 0, instruction.rd, cur_PC);
+            lsbEntryId = lsb.insertStoreCommand(instruction.rs1, 2);
+            robEntry = rob.insertEntry(RoBType::STOREH, lsbEntryId, instruction.rd, cur_PC);
         } else if (instruction.opcode == Opcode::SW) {
-            robEntry = rob.insertEntry(RoBType::STOREW, 0, instruction.rd, cur_PC);
+            lsbEntryId = lsb.insertStoreCommand(instruction.rs1, 4);
+            robEntry = rob.insertEntry(RoBType::STOREW, lsbEntryId, instruction.rd, cur_PC);
+        }
+    } else if (OpValue(instruction.opcode) == 0x03){
+        // Load
+        // lsbEntryId stored in rob.value
+        if (!lsb.available()) return; // wait
+        uint lsbEntryId;
+        if (instruction.opcode == Opcode::LB) {
+            lsbEntryId = lsb.insertLoadCommand(0, 0, 1);
+            robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
+        } else if (instruction.opcode == Opcode::LH) {
+            lsbEntryId = lsb.insertLoadCommand(0, 0, 2);
+            robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
+        } else if (instruction.opcode == Opcode::LW) {
+            lsbEntryId = lsb.insertLoadCommand(0, 0, 4);
+            robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
+        } else if (instruction.opcode == Opcode::LBU) {
+            lsbEntryId = lsb.insertLoadCommand(1, 0, 1);
+            robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
+        } else if (instruction.opcode == Opcode::LHU) {
+            lsbEntryId = lsb.insertLoadCommand(1, 0, 2);
+            robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
         }
     } else if (instruction.opcode == Opcode::JALR){
         robEntry = rob.insertEntry(RoBType::JALR, 0, instruction.rd, cur_PC);
     } else if (instruction.opcode == Opcode::JAL){
         robEntry = rob.insertEntry(RoBType::REGISTER, cur_PC + 4, instruction.rd, cur_PC);
-//        PC = PC + toTwosComplement(instruction.imm);
-    }  else {
+    } else {
         robEntry = rob.insertEntry(RoBType::REGISTER, 0, instruction.rd, cur_PC);
     }
-    //todo
+
     switch (instruction.opcode) {
         case Opcode::LUI:
             rob.updateEntry(robEntry, static_cast<uint>(instruction.imm));
