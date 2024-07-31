@@ -13,8 +13,8 @@ public:
     T val;
     Register(): val(), nxt() {}
     explicit Register(T val_): val(val_), nxt(val_) {}
-    T read() { return val; }
-    T current() { return nxt; }
+    T read() const { return val; }
+    T current() const { return nxt; }
     void write(const T &t) { nxt = t; }
     void tick() { val = nxt; }
     operator T() { return val; }

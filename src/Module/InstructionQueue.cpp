@@ -27,6 +27,7 @@ void InstructionQueue::tickRegister() {
         busy[i].tick();
         instructions[i].tick();
         curPC[i].tick();
+        jump[i].tick();
     }
 }
 
@@ -41,45 +42,57 @@ void InstructionQueue::flush() {
 void InstructionQueue::newInstruction() {
     if (!busy[tail]) {
         busy[tail] = true;
-        instructions[tail] = lsb.loadInstruction(PC);
+        uint cur_instruction = lsb.loadInstruction(PC);
+        instructions[tail] = cur_instruction;
         curPC[tail] = PC;
-        PC = PC + 4;
+        std::cout << "PC:" << PC << " New Instruction:" << std::bitset<32>(lsb.loadInstruction(PC)) << std::endl;
+        Instruction instruction(cur_instruction);
+        if (OpValue(instruction.opcode) == 0x63) {
+            // Predict Branch
+            bool jumpFlag = bp.predict(PC);
+            jump[tail] = jumpFlag;
+            if (jumpFlag) {
+                PC = PC + instruction.imm;
+            } else {
+                PC = PC + 4;
+            }
+        } else if (instruction.opcode == Opcode::JAL){
+            std::cout<<instruction.imm<<','<<toTwosComplement(instruction.imm)<<std::endl;
+            PC = PC + toTwosComplement(instruction.imm);
+        } else {
+            PC = PC + 4;
+        }
         tail = (tail + 1) % queueSize;
+        std::cout<<"Next PC: "<<PC.current()<<std::endl;
     }
 }
 
 void InstructionQueue::executeInstruction(){
+    if (!busy[head]) return; // wait
     if (!(rob.available() && rs.available())) return; // wait
     uint robEntry;
     Instruction instruction(instructions[head]);
+    instruction.debug(PC);
+    uint cur_PC = curPC[head];
     if (OpValue(instruction.opcode) == 0x63) {
         // Predict Branch
-        bool jumpFlag = bp.predict(PC);
-        robEntry = rob.insertEntry(RoBType::BRANCH, jumpFlag, PC + instruction.imm, PC);
-        if (jumpFlag) {
-            PC = PC + instruction.imm;
-        } else {
-            PC = PC + 4;
-        }
+        robEntry = rob.insertEntry(RoBType::BRANCH, jump[head], PC + instruction.imm, cur_PC);
     } else if (OpValue(instruction.opcode) == 0x23){
         // Store
         if (instruction.opcode == Opcode::SB) {
-            robEntry = rob.insertEntry(RoBType::STOREB, 0, instruction.rd, PC);
+            robEntry = rob.insertEntry(RoBType::STOREB, 0, instruction.rd, cur_PC);
         } else if (instruction.opcode == Opcode::SH) {
-            robEntry = rob.insertEntry(RoBType::STOREH, 0, instruction.rd, PC);
+            robEntry = rob.insertEntry(RoBType::STOREH, 0, instruction.rd, cur_PC);
         } else if (instruction.opcode == Opcode::SW) {
-            robEntry = rob.insertEntry(RoBType::STOREW, 0, instruction.rd, PC);
+            robEntry = rob.insertEntry(RoBType::STOREW, 0, instruction.rd, cur_PC);
         }
-        PC = PC + 4;
     } else if (instruction.opcode == Opcode::JALR){
-        robEntry = rob.insertEntry(RoBType::JALR, PC + 4, instruction.rd, PC);
-        PC = PC + 4;
+        robEntry = rob.insertEntry(RoBType::JALR, PC + 4, instruction.rd, cur_PC);
     } else if (instruction.opcode == Opcode::JAL){
-        robEntry = rob.insertEntry(RoBType::REGISTER, PC + 4, instruction.rd, PC);
-        PC = PC + toTwosComplement(instruction.imm);
+        robEntry = rob.insertEntry(RoBType::REGISTER, PC + 4, instruction.rd, cur_PC);
+//        PC = PC + toTwosComplement(instruction.imm);
     }  else {
-        robEntry = rob.insertEntry(RoBType::REGISTER, 0, instruction.rd, PC);
-        PC = PC + 4;
+        robEntry = rob.insertEntry(RoBType::REGISTER, 0, instruction.rd, cur_PC);
     }
     //todo
     switch (instruction.opcode) {
@@ -197,11 +210,14 @@ void InstructionQueue::executeInstruction(){
         default:
             throw std::invalid_argument("Unknown Opcode");
     }
+    busy[head] = false;
+    head = (head + 1) % queueSize;
 }
 
 void InstructionQueue::Run() {
-    if (!busy[head]) return;
+//    std::cout<<"InstructionQueue::executeInstruction()"<<std::endl;
     executeInstruction();
+//    std::cout<<"InstructionQueue::newInstruction()"<<std::endl;
     newInstruction();
 }
 

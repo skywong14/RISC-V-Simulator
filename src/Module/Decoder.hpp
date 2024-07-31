@@ -23,6 +23,7 @@ enum class Opcode {
     AND
 };
 uint OpValue(Opcode opcode);
+std::string toString(Opcode opcode);
 
 class Instruction{
 private:
@@ -60,7 +61,10 @@ public:
             case 0x6F:
                 // JAL
                 opcode = Opcode::JAL;
-                imm = ((instructionNumber >> 21) & 0x3FF) | ((instructionNumber >> 20) & 0x1) << 10 | ((instructionNumber >> 12) & 0xFF) << 11 | ((instructionNumber >> 31) << 20);
+                imm = ((instructionNumber >> 21) & 0x3FF) << 1 | // imm[10:1]
+                      ((instructionNumber >> 20) & 0x1) << 11 | // imm[11]
+                      ((instructionNumber >> 12) & 0xFF) << 12 | // imm[19:12]
+                      ((instructionNumber >> 31) << 20); // imm[20]
                 if (imm & 0x100000) imm |= 0xFFE00000; // sign extend
                 break;
             case 0x67:
@@ -93,8 +97,11 @@ public:
                     default:
                         throw std::runtime_error("Unknown funct3 for branch instruction");
                 }
-                imm = ((instructionNumber >> 8) & 0xF) | ((instructionNumber >> 25) << 5) | ((instructionNumber >> 7) & 0x1) << 11 | ((instructionNumber >> 31) << 12);
-                if (imm & 0x1000) imm |= 0xFFFFE000; // sign extend (if imm < 0)
+                imm = ((instructionNumber >> 8) & 0xF) | // imm[4:1]
+                      ((instructionNumber >> 25) << 5) | // imm[10:5]
+                      ((instructionNumber >> 7) & 0x1) << 11 | // imm[11]
+                      ((instructionNumber >> 31) << 12); // imm[12]
+                if (imm & 0x1000) imm |= 0xFFFFE000; // sign extend
                 break;
             case 0x03:
                 // LB, LH, LW, LBU, LHU
@@ -135,8 +142,9 @@ public:
                     default:
                         throw std::runtime_error("Unknown funct3 for store instruction");
                 }
-                imm = ((instructionNumber >> 7) & 0x1F) | ((instructionNumber >> 25) << 5);
-                if (imm & 0x800) imm |= 0xFFFFF000; // sign extend (if imm < 0)
+                imm = ((instructionNumber >> 7) & 0x1F) | // imm[4:0]
+                      ((instructionNumber >> 25) << 5); // imm[11:5]
+                if (imm & 0x800) imm |= 0xFFFFF000; // sign extend
                 break;
             case 0x13:
                 // ADDI, SLTI, SLTIU, XORI, ORI, ANDI, SLLI, SRLI, SRAI
@@ -219,6 +227,7 @@ public:
                 imm = 0;
                 break;
             default:
+                std::cout << "Instruction: " << std::bitset<32>(instructionNumber) << std::endl;
                 throw std::runtime_error("Unknown Opcode");
                 break;
         }
@@ -227,16 +236,16 @@ public:
         instructionNumber = input;
         parser();
     }
-    void debug() {
-        std::cout << "---------------" << std::endl;
-        std::cout << "Opcode: " << std::bitset<7>(static_cast<uint32_t>(opcode)) << std::endl;
-        std::cout << "rd: " << std::bitset<5>(rd) << std::endl;
-        std::cout << "funct3: " << std::bitset<3>(funct3) << std::endl;
-        std::cout << "rs1: " << std::bitset<5>(rs1) << std::endl;
-        std::cout << "rs2: " << std::bitset<5>(rs2) << std::endl;
-        std::cout << "funct7: " << std::bitset<7>(funct7) << std::endl;
-        std::cout << "imm: " << std::bitset<32>(imm) << std::endl;
-        std::cout << "---------------" << std::endl;
+    void debug(uint curPC = 0) {
+        std::cout << "Instruction: " << std::bitset<32>(instructionNumber) << std::endl;
+        std::cout << "    PC: " << curPC << std::endl;
+        std::cout << "    Opcode: " << toString(opcode)  << std::endl;
+        std::cout << "    rd: " << std::bitset<5>(rd) << std::endl;
+        std::cout << "    funct3: " << std::bitset<3>(funct3) << std::endl;
+        std::cout << "    rs1: " << std::bitset<5>(rs1) << std::endl;
+        std::cout << "    rs2: " << std::bitset<5>(rs2) << std::endl;
+        std::cout << "    funct7: " << std::bitset<7>(funct7) << std::endl;
+        std::cout << "    imm: " << std::bitset<32>(imm) << std::endl;
     }
 };
 

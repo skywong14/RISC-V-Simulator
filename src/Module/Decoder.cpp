@@ -82,3 +82,45 @@ uint OpValue(Opcode opcode){
             return -1; // Unknown opcode
     }
 }
+std::string toString(Opcode opcode) {
+    switch (opcode) {
+        case Opcode::LUI: return "LUI";
+        case Opcode::AUIPC: return "AUIPC";
+        case Opcode::JAL: return "JAL";
+        case Opcode::JALR: return "JALR";
+        case Opcode::BEQ: return "BEQ";
+        case Opcode::BNE: return "BNE";
+        case Opcode::BLT: return "BLT";
+        case Opcode::BGE: return "BGE";
+        case Opcode::BLTU: return "BLTU";
+        case Opcode::BGEU: return "BGEU";
+        case Opcode::LB: return "LB";
+        case Opcode::LH: return "LH";
+        case Opcode::LW: return "LW";
+        case Opcode::LBU: return "LBU";
+        case Opcode::LHU: return "LHU";
+        case Opcode::SB: return "SB";
+        case Opcode::SH: return "SH";
+        case Opcode::SW: return "SW";
+        case Opcode::ADDI: return "ADDI";
+        case Opcode::SLTI: return "SLTI";
+        case Opcode::SLTIU: return "SLTIU";
+        case Opcode::XORI: return "XORI";
+        case Opcode::ORI: return "ORI";
+        case Opcode::ANDI: return "ANDI";
+        case Opcode::SLLI: return "SLLI";
+        case Opcode::SRLI: return "SRLI";
+        case Opcode::SRAI: return "SRAI";
+        case Opcode::ADD: return "ADD";
+        case Opcode::SUB: return "SUB";
+        case Opcode::SLL: return "SLL";
+        case Opcode::SLT: return "SLT";
+        case Opcode::SLTU: return "SLTU";
+        case Opcode::XOR: return "XOR";
+        case Opcode::SRL: return "SRL";
+        case Opcode::SRA: return "SRA";
+        case Opcode::OR: return "OR";
+        case Opcode::AND: return "AND";
+        default: return "Unknown";
+    }
+}

@@ -16,6 +16,7 @@ void RoB::updateEntry(uint robEntry) {
 
 
 void RoB::tickRegister(){
+    head.tick(); tail.tick();
     for (int i = 0; i < Size; i++)
         entries[i].tick();
 }
@@ -36,13 +37,11 @@ void RoB::updateEntry(uint robEntry, uint value) {
     entries[robEntry].ready = true;
 
     //Notify RS
-
     rs.updateEntry(robEntry, entries[robEntry].value);
 }
 
 void RoB::commitEntry() {
     if (entries[head].busy && entries[head].ready) {
-
         switch (entries[head].type) {
             case RoBType::BRANCH_SUCCESS:
                 //update Predictor
@@ -84,13 +83,16 @@ void RoB::commitEntry() {
                 throw std::runtime_error("Impossible");
                 break;
             case RoBType::EXIT:
+                throw std::runtime_error("Exit~");
                 //todo exit
                 break;
         }
+        commitDebug();
         head = (head + 1) % Size;
         entries[head].busy = false; entries[head].ready = false;
     }
 }
+
 
 bool RoB::available() {
     return !entries[tail].busy;
@@ -132,4 +134,34 @@ RoB::RoB(ReservationStation &rs_, BranchPredictor &bp_, LSB &lsb_, InstructionQu
     for (int i = 0; i < Size; i++) {
         entries[i].busy = false;
     }
+}
+std::string toString(RoBType type){
+    switch (type) {
+        case RoBType::REGISTER:
+            return "REGISTER";
+        case RoBType::BRANCH:
+            return "BRANCH";
+        case RoBType::JALR:
+            return "JALR";
+        case RoBType::BRANCH_SUCCESS:
+            return "BRANCH_SUCCESS";
+        case RoBType::BRANCH_FAIL:
+            return "BRANCH_FAIL";
+        case RoBType::EXIT:
+            return "EXIT";
+        case RoBType::STOREB:
+            return "STOREB";
+        case RoBType::STOREH:
+            return "STOREH";
+        case RoBType::STOREW:
+            return "STOREW";
+    }
+    return "UNKNOWN";
+}
+void RoB::commitDebug() {
+    std::cout << "Commit Entry: " << head.read() << std::endl;
+    std::cout << "    Type: " << toString(entries[head].type) << std::endl;
+    std::cout << "    Dest: " << entries[head].dest.read() << std::endl;
+    std::cout << "    Value: " << entries[head].value.read() << std::endl;
+    std::cout << "    PC: " << entries[head].PC.read() << std::endl;
 }

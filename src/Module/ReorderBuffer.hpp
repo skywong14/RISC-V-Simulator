@@ -20,6 +20,8 @@ class InstructionQueue;
 enum class RoBType{
     REGISTER, BRANCH, JALR, BRANCH_SUCCESS, BRANCH_FAIL, EXIT, STOREB, STOREH, STOREW
 };
+std::string toString(RoBType type);
+
 class RoB {
 private:
     ReservationStation& rs;
@@ -64,6 +66,8 @@ public:
     void commitEntry();
     void tickRegister();
     void tick();
+
+    void commitDebug();
 
     // 打印 RoB 状态
 

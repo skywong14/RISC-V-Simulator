@@ -7,6 +7,7 @@
 #pragma once
 #include <iostream>
 #include <cstring>
+#include <bitset>
 
 using uint = unsigned int;
 
@@ -16,7 +17,7 @@ private:
     unsigned char mem[MEMORY_SIZE];
 public:
     Memory();
-    bool check_addr(uint addr);
+    static bool check_addr(uint addr);
 
     uint read_word(uint addr);
 

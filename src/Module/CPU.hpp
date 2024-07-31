@@ -37,6 +37,8 @@ public:
             bp.tick();
             rs.tick();
             alu.tick();
+            std::cout<<std::endl<<std::endl;
+            if (clock > 100) halted = true;
         }
     }
 };

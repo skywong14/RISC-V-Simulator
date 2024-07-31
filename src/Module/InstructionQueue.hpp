@@ -21,6 +21,7 @@ class InstructionQueue{
     Register<uint> instructions[queueSize];
     Register<uint> curPC[queueSize];
     Register<bool> busy[queueSize];
+    Register<bool> jump[queueSize];
     ReservationStation& rs;
     RoB& rob;
     LSB& lsb;
