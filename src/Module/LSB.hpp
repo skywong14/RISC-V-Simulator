@@ -9,7 +9,7 @@
 
 class LSB{
 private:
-    static const int BufferSize = 2;
+    static const int BufferSize = 10;
     Memory& mem;
     Register<uint> head, tail;
     Register<uint> busy[BufferSize];

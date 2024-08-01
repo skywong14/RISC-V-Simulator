@@ -13,37 +13,38 @@ void ReservationStation::RSEntry::tick(){
 void
 ReservationStation::RSEntry::putInstruction(CalcType calcType_, DataSource dataSource_, uint val1, uint val2, uint val3,
                                             uint RoBEntry_, RegisterFile &rf_) {
+//    std::cout<<"putting instruction to RS: "<< toString(calcType_) << ", RobTag:" << RoBEntry_ << "| Value:"<<val1<<','<<val2<<','<<val3<<std::endl;
     busy = true;
     robEntry = RoBEntry_;
     calcType = calcType_;
     dataSource = dataSource_;
     if (dataSource_ == DataSource::TwoReg){
-        if (!rf_.is_busy(val1)) {
-            Vj = rf_.readRegister(val1); Qj = -1;
+        if (rf_.ableToRead(val1, RoBEntry_)) {
+            Vj = rf_.readRegister(val1, RoBEntry_); Qj = -1;
         } else {
             Vj = 0;  Qj = rf_.getTag(val1);
         }
-        if (!rf_.is_busy(val2)) {
-            Vk = rf_.readRegister(val2); Qk = -1;
+        if (rf_.ableToRead(val2, RoBEntry_)) {
+            Vk = rf_.readRegister(val2, RoBEntry_); Qk = -1;
         } else {
             Vk = 0; Qk = rf_.getTag(val2);
         }
     } else if (dataSource_ == DataSource::RegNImm){
         A = val2;
-        if (!rf_.is_busy(val1)) {
-            Vj = rf_.readRegister(val1); Qj = -1;
+        if (rf_.ableToRead(val1, RoBEntry_)) {
+            Vj = rf_.readRegister(val1, RoBEntry_); Qj = -1;
         } else {
             Vj = 0;  Qj = rf_.getTag(val1);
         }
         Vk = 0; Qk = -1;
     } else if (dataSource_ == DataSource::TwoRegNImm){
-        if (!rf_.is_busy(val1)) {
-            Vj = rf_.readRegister(val1); Qj = -1;
+        if (rf_.ableToRead(val1, RoBEntry_)) {
+            Vj = rf_.readRegister(val1, RoBEntry_); Qj = -1;
         } else {
             Vj = 0;  Qj = rf_.getTag(val1);
         }
-        if (!rf_.is_busy(val2)) {
-            Vk = rf_.readRegister(val2); Qk = -1;
+        if (rf_.ableToRead(val2, RoBEntry_)) {
+            Vk = rf_.readRegister(val2, RoBEntry_); Qk = -1;
         } else {
             Vk = 0; Qk = rf_.getTag(val2);
         }
@@ -52,7 +53,8 @@ ReservationStation::RSEntry::putInstruction(CalcType calcType_, DataSource dataS
 }
 
 void ReservationStation::tickRegister() {
-    flushFlag.tick();
+//    loadUpdateBuffer();
+    flushFlag.tick(); updateBufferEntry.tick(); updateBufferVal.tick();
     for (int i = 0; i < StationSize; i++)
         data[i].tick();
 }
@@ -68,13 +70,17 @@ void ReservationStation::insertEntry(CalcType calcType_, DataSource dataSource, 
     if (!available()) throw std::runtime_error("busy when joining");
     for (int i = 0; i < StationSize; i++)
         if (!data[i].busy) {
-//            std::cout<<"inserting instruction to RS"<<std::endl;
             data[i].putInstruction(calcType_, dataSource, val1, val2, val3, RoBEntry_, rf);
             break;
         }
 }
 
 void ReservationStation::Run() {
+    if (flushFlag) {
+        flush();
+        return;
+    }
+
     for (int i = 0; i < StationSize; i++)
         if (data[i].busy && data[i].Qj == -1 && data[i].Qk == -1){
             // execute
@@ -88,17 +94,14 @@ void ReservationStation::Run() {
                 data[i].busy = false;
             } else if (static_cast<int>((CalcType)data[i].calcType) < 19) {
                 // load
-//                std::cout<<"Loading to "<<data[i].robEntry<<','<<static_cast<int>(data[i].calcType.read())<<"...";
                 if (data[i].dataSource == DataSource::RegNImm) {
                     // load step 1
                     data[i].A = alu.Execute(CalcType::Add, data[i].Vj, data[i].A, data[i].robEntry);
                     data[i].dataSource = DataSource::Imm;
                     data[i].Vj = rob.getValue(data[i].robEntry); // the lsbEntryId
-//                    std::cout<<"A: "<<data[i].A.current()<<std::endl;
                 } else {
                     // load step 2
                     //now Vj stores the lsbEntryId
-//                    std::cout<<"Test able to Load entry_"<<data[i].Vj<<", calcType: "<<static_cast<int>(data[i].calcType.read())<<std::endl;
                     if (lsb.ableToLoad(data[i].Vj)) {
                         uint length = 0;
                         if (static_cast<int>((CalcType)data[i].calcType) == 14 || static_cast<int>((CalcType)data[i].calcType) == 17) length = 1;
@@ -114,6 +117,7 @@ void ReservationStation::Run() {
                         // step 2 done
                     }
                     // else wait for lsb
+                    continue;
                 }
             } else {
                 // store
@@ -123,18 +127,39 @@ void ReservationStation::Run() {
             }
             break; // only one instruction can be executed in one cycle
         }
+    loadUpdateBuffer();
+}
+
+void ReservationStation::loadUpdateBuffer() {
+    if (updateBufferEntry == -1) return;
+//    std::cout<<"->RS loading updateBufferEntry_"<<updateBufferEntry<<" with value "<<updateBufferVal<<std::endl;
+    for (int i = 0; i < StationSize; i++)
+        if (data[i].busy.current()){
+            if (data[i].Qj.current() == updateBufferEntry) {
+                data[i].Vj = updateBufferVal;
+                data[i].Qj = -1;
+            }
+            if (data[i].Qk.current() == updateBufferEntry) {
+                data[i].Vk = updateBufferVal;
+                data[i].Qk = -1;
+            }
+        }
+    updateBufferEntry = -1;
 }
 
 void ReservationStation::updateEntry(uint robEntry, uint value) {
+//    std::cout<<"->RS updating entry_"<<robEntry<<" with value "<<value<<std::endl;
+    updateBufferEntry = robEntry;
+    updateBufferVal = value;
     for (int i = 0; i < StationSize; i++)
         if (data[i].busy){
             if (data[i].Qj == robEntry) {
                 data[i].Vj = value;
-                data[i].Qj = 0;
+                data[i].Qj = -1;
             }
             if (data[i].Qk == robEntry) {
                 data[i].Vk = value;
-                data[i].Qk = 0;
+                data[i].Qk = -1;
             }
         }
 }
@@ -151,6 +176,7 @@ void ReservationStation::tick() {
 }
 
 ReservationStation::ReservationStation(ALU &alu_, RegisterFile &rf_, RoB &rob_, LSB& lsb_): alu(alu_), rf(rf_), rob(rob_), lsb(lsb_){
+    updateBufferEntry = -1;
     for (int i = 0; i < StationSize; i++)
         data[i].busy.write(false);
     tickRegister();
@@ -162,7 +188,7 @@ void ReservationStation::PrintState() {
         std::cout << "    Entry " << i << ": ";
         if (data[i].busy) {
             std::cout << "Busy, ";
-            std::cout << "CalcType: " << static_cast<int>((CalcType)data[i].calcType) << ", ";
+            std::cout << "CalcType: " << toString(data[i].calcType) << ", ";
             std::cout << "DataSource: " << static_cast<int>((DataSource)data[i].dataSource) << ", ";
             std::cout << "Vj: " << data[i].Vj << ", ";
             std::cout << "Vk: " << data[i].Vk << ", ";
@@ -182,7 +208,11 @@ void ReservationStation::NotifyFlush() {
 }
 
 void ReservationStation::flush() {
-    for (int i = 0; i < StationSize; i++)
+    for (int i = 0; i < StationSize; i++){
         data[i].busy = false;
+        data[i].Vj = 0; data[i].Vk = 0;
+        data[i].Qj = -1; data[i].Qk = -1;
+        data[i].A = 0; data[i].robEntry = -1;
+    }
     flushFlag = false;
 }

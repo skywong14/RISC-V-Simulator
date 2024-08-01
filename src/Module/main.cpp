@@ -7,6 +7,7 @@
 #include "CPU.hpp"
 
 int commit_cnt = 0;
+int clock_cnt = 0;
 
 int main() {
 //    freopen("input.txt", "r", stdin);

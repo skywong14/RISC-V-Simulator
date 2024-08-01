@@ -19,6 +19,8 @@ enum class CalcType {
     LB = 14, LH = 15, LW = 16, LBU = 17, LHU = 18, SB = 19, SH = 20, SW = 21
 };
 
+std::string toString(CalcType type);
+
 class ALU{
 private:
     bool busy;

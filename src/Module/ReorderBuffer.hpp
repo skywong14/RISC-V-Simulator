@@ -33,7 +33,7 @@ private:
 public:
     Register<bool> haltFlag;
     Register<bool> flushFlag;
-    static const int Size = 1;
+    static const int Size = 10;
     struct RoBEntry {
         Register<RoBType> type;  // 计算指令
         Register<uint> dest; // 目的寄存器 or 目标内存地址
@@ -57,6 +57,7 @@ public:
 
     bool available();
     bool Halted();
+    void Run();
 
     //insert robEntry to ReservationStation
     uint insertEntry(RoBType type_, uint value_, uint dest_, uint PC);

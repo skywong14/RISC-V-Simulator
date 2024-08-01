@@ -41,10 +41,8 @@ void InstructionQueue::newInstruction() {
 
         instructions[tail] = cur_instruction;
         curPC[tail] = PC;
-//        std::cout << "PC:" << PC << " New Instruction:" << std::bitset<32>(lsb.loadInstruction(PC)) << std::endl;
         Instruction instruction(cur_instruction);
         if (instruction.opcode == Opcode::UNKNOWN) {
-//            std::cout<<"{Warning} empty Instruction at PC: "<<std::hex<<PC<<std::endl<<std::dec;
             busy[tail] = false;
             return;
         }
@@ -63,7 +61,6 @@ void InstructionQueue::newInstruction() {
             PC = PC + 4;
         }
         tail = (tail + 1) % queueSize;
-//        std::cout<<"Next PC: "<<PC.current()<<std::endl;
     }
 }
 
@@ -76,7 +73,6 @@ void InstructionQueue::executeInstruction(){
 //    instruction.debug(cur_PC);
     if (instructions[head] == 0x0ff00513) {
         // Exit command
-//        std::cout<< "Exit Command Here" << std::endl;
         robEntry = rob.insertEntry(RoBType::EXIT, 0, 0, cur_PC);
     } else if (OpValue(instruction.opcode) == 0x63) {
         // Predict Branch
@@ -110,7 +106,7 @@ void InstructionQueue::executeInstruction(){
     } else {
         robEntry = rob.insertEntry(RoBType::REGISTER, 0, instruction.rd, cur_PC);
     }
-
+    // need to wait one tick
     switch (instruction.opcode) {
         case Opcode::LUI:
             rob.updateEntry(robEntry, static_cast<uint>(instruction.imm));
@@ -231,6 +227,10 @@ void InstructionQueue::executeInstruction(){
 }
 
 void InstructionQueue::Run() {
+    if (flushFlag) {
+        flush();
+        return;
+    }
     executeInstruction();
     newInstruction();
 }

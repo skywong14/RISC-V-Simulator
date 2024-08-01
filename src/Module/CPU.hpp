@@ -35,30 +35,35 @@ public:
     }
     void Run(){
         extern int commit_cnt;
+        extern int clock_cnt;
         while (!halted){
             clock++;
+            clock_cnt++;
 //            std::cout<<"-----Clock "<<clock<<"-----"<<std::endl;
-            iq.tick();
-            lsb.tick();
-            rob.tick();
-            rf.tick();
+            iq.Run();
+            rs.Run();
+            lsb.Run();
+            rob.Run();
+            rf.Run();
+
             bp.tick();
-            rs.tick();
             alu.tick();
+
+            iq.tickRegister();
+            lsb.tickRegister();
+            rob.tickRegister();
+            rf.tickRegister();
+            rs.tickRegister();
+
 //            rob.printStatus();
+//            rs.PrintState();
 //            rf.debug();
+//            lsb.debug();
 //            std::cout<<std::endl<<std::endl;
+
             if (rob.Halted()) Exit();
-            if (commit_cnt  >=  1694 - 2 && false) {
-                std::cout<<"----------------"<<std::endl;
-                std::cout << "commit_cnt: " << commit_cnt << std::endl;
-                rob.printStatus();
-                lsb.debug();
-                rs.PrintState();
-                rf.debug();
-                std::cout<<"----------------"<<std::endl;
-//                debugFlag = false;
-            }
+
+//            if (commit_cnt > 716) return;
         }
     }
 };

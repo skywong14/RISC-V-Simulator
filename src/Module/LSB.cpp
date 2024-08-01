@@ -85,6 +85,10 @@ uint LSB::insertStoreCommand() {
 }
 
 void LSB::Run() {
+    if (flushFlag) {
+        flush();
+        return; //wait one tick
+    }
     // checkHead
     if (!busy[head]) return;
     if (busy[head] && ready[head]) {
@@ -119,7 +123,9 @@ void LSB::debug() {
     std::cout << "LSB Status: " << std::endl;
     std::cout << "Head: " << head << ", Tail: " << tail << std::endl;
     for (int i = 0; i < BufferSize; i++) {
-        std::cout << "  Entry " << i << ": " << "busy: " << busy[i] << ", ready: " << ready[i] << std::endl;
+        std::cout << "    Entry " << i << ": ";
+        if (busy[i]) std::cout << "Busy, Ready: " << ready[i] << std::endl;
+        else std::cout << "Not Busy" << std::endl;
     }
     std::cout<<std::endl;
 }

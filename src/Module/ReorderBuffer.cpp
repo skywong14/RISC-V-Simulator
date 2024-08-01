@@ -9,8 +9,15 @@ void RoB::tick() {
         tickRegister();
         return;
     }
-    commitEntry();
+    Run();
     tickRegister();
+}
+void RoB::Run() {
+    if (flushFlag){
+        flush();
+        return;
+    }
+    commitEntry();
 }
 
 void RoB::updateEntry(uint robEntry) {
@@ -38,15 +45,12 @@ void RoB::updateStoreEntry(uint robEntry, uint value, uint dest) {
 }
 
 void RoB::updateEntry(uint robEntry, uint value) {
-    if (entries[robEntry].type == RoBType::BRANCH) {
+    if (entries[robEntry].type.current() == RoBType::BRANCH) {
         if (value == entries[robEntry].value)  entries[robEntry].type = RoBType::BRANCH_SUCCESS;
         else  entries[robEntry].type = RoBType::BRANCH_FAIL;
     }
     entries[robEntry].value = value;
     entries[robEntry].ready = true;
-
-    //Notify RS
-    rs.updateEntry(robEntry, entries[robEntry].value);
 }
 
 void RoB::commitEntry() {
@@ -63,10 +67,8 @@ void RoB::commitEntry() {
                 if (entries[head].value == 0){
                     // not jump in fact
                     iq.flushOldPC(entries[head].PC + 4);
-//                    iq.PC = entries[head].PC + 4;
                 } else {
                     // jump in fact
-//                    iq.PC = entries[head].dest;
                     iq.flushOldPC(entries[head].dest);
                 }
                 flushNow = true;
@@ -91,9 +93,12 @@ void RoB::commitEntry() {
                 break;
             case RoBType::REGISTER:
                 rf.writeRegister(entries[head].dest, entries[head].value, head);
+                rs.updateEntry(head, entries[head].value);
+
                 break;
             case RoBType::JALR:
                 rf.writeRegister(entries[head].dest, entries[head].PC + 4, head);
+                rs.updateEntry(head, entries[head].PC + 4);
 //                std::cout<<"[JALR] new PC: "<<entries[head].value<<std::endl;
                 iq.flushOldPC(entries[head].value); // value = rs1 + imm
                 flushAll();
@@ -107,8 +112,7 @@ void RoB::commitEntry() {
                 haltFlag = true; //throw std::runtime_error("Exit~");
                 break;
         }
-        if (commitDebugTag)
-            commitDebug();
+        if (commitDebugTag) commitDebug();
         head = (head + 1) % Size;
         entries[head].busy = false; entries[head].ready = false;
         if (flushNow) flushAll();
@@ -122,7 +126,7 @@ bool RoB::available() {
 
 uint RoB::insertEntry(RoBType type_, uint value_, uint dest_, uint PC) {
     if (entries[tail].busy) {
-        throw std::overflow_error("RoB is full");
+        throw std::runtime_error("RoB is full");
     }
     entries[tail].type = type_;
     entries[tail].dest = dest_;
@@ -134,20 +138,29 @@ uint RoB::insertEntry(RoBType type_, uint value_, uint dest_, uint PC) {
 
     uint robEntry = tail;
     tail = (tail + 1) % Size;
+
+    if (type_ == RoBType::REGISTER || type_ == RoBType::JALR)
+        rf.updateRegisterStatus(dest_, robEntry);
     return robEntry;
 }
 
 void RoB::printStatus() const {
     std::cout << "RoB Status: " << std::endl;
+    Register<uint> v; Register<bool> b;
+    std::cout<<"    Head: "<<head.read()<<" Tail: "<<tail.read()<<std::endl;
     for (int i = 0; i < Size; i++) {
         std::cout << "    Entry " << i << ": ";
-        Register<uint> v; Register<bool> b;
-        std::cout << "Type: " << toString(entries[i].type.read()) << " ";
-        v = entries[i].dest; std::cout << "Dest: " << v << " ";
-        v = entries[i].value; std::cout << "Value: " << v << " ";
-        b = entries[i].ready; std::cout << "Ready: " << b << " ";
-        b = entries[i].busy; std::cout << "Busy: " << b << " ";
-        v = entries[i].PC; std::cout << "PC: 0x" << std::hex << v << std::endl << std::dec;
+        b = entries[i].busy;
+        if (!b) std::cout<<"Not Busy"<<std::endl;
+        else {
+            std::cout << "Busy, ";
+            std::cout << "Type: " << toString(entries[i].type.read()) << " ";
+            v = entries[i].dest; std::cout << "Dest: " << v << " ";
+            v = entries[i].value; std::cout << "Value: " << v << " ";
+            b = entries[i].ready; std::cout << "Ready: " << b << " ";
+            v = entries[i].PC; std::cout << "PC: 0x" << std::hex << v << std::endl << std::dec;
+        }
+
     }
 }
 

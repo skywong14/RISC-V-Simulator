@@ -22,22 +22,24 @@ enum class DataSource{
 class RoB;
 class LSB;
 
-class ReservationStation{
+class   ReservationStation{
 private:
     ALU& alu;
     RegisterFile& rf;
     RoB& rob;
     LSB& lsb;
 public:
+    Register<int> updateBufferEntry;
+    Register<uint> updateBufferVal;
     Register<bool> flushFlag;
-    static const int StationSize = 1;
+    static const int StationSize = 10;
     struct RSEntry{
         Register<CalcType> calcType;
         Register<Opcode> opcode;
         Register<uint> Vj, Vk;
         Register<int> Qj, Qk;
         Register<uint> A; // 立即数或地址，用于记录指令中的常量值或内存地址
-        Register<uint> robEntry; //该指令在RoB中编号
+        Register<int> robEntry; //该指令在RoB中编号
         Register<DataSource> dataSource;
         Register<bool> busy;
         void tick();
@@ -60,6 +62,7 @@ public:
     void flush();
 
     void PrintState();
+    void loadUpdateBuffer();
 };
 
 

@@ -237,14 +237,14 @@ public:
     }
     void debug(uint curPC = 0) {
         std::cout << "Instruction: " << std::bitset<32>(instructionNumber) << std::endl;
-        std::cout << "    PC: 0x"  << std::hex << curPC << std::endl << std::dec;
-        std::cout << "    Opcode: " << toString(opcode)  << std::endl;
-        std::cout << "    rd: " << std::bitset<5>(rd) << std::endl;
-        std::cout << "    funct3: " << std::bitset<3>(funct3) << std::endl;
-        std::cout << "    rs1: " << std::bitset<5>(rs1) << std::endl;
-        std::cout << "    rs2: " << std::bitset<5>(rs2) << std::endl;
-        std::cout << "    funct7: " << std::bitset<7>(funct7) << std::endl;
-        std::cout << "    imm: " << std::bitset<32>(imm) << std::endl;
+        std::cout << "     PC: 0x"  << std::hex << curPC << std::endl << std::dec;
+        std::cout << "     Opcode: " << toString(opcode)  << std::endl;
+        std::cout << "     rd: " << std::bitset<5>(rd) << std::endl;
+//        std::cout << "     funct3: " << std::bitset<3>(funct3) << std::endl;
+        std::cout << "     rs1: " << std::bitset<5>(rs1) << std::endl;
+        std::cout << "     rs2: " << std::bitset<5>(rs2) << std::endl;
+//        std::cout << "     funct7: " << std::bitset<7>(funct7) << std::endl;
+        std::cout << "     imm: " << std::bitset<32>(imm) << std::endl;
     }
 };
 

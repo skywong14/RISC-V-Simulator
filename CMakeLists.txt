@@ -26,4 +26,5 @@ add_executable(code
         src/Module/ReorderBuffer.cpp
         src/Module/ReservationStation.cpp
         src/Common/utils.cpp
-        src/Module/Decoder.cpp)
+        src/Module/Decoder.cpp
+        src/Module/ALU.cpp)
