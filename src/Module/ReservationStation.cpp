@@ -13,7 +13,6 @@ void ReservationStation::RSEntry::tick(){
 void
 ReservationStation::RSEntry::putInstruction(CalcType calcType_, DataSource dataSource_, uint val1, uint val2, uint val3,
                                             uint RoBEntry_, RegisterFile &rf_) {
-//    std::cout<<"putting instruction to RS: "<< toString(calcType_) << ", RobTag:" << RoBEntry_ << "| Value:"<<val1<<','<<val2<<','<<val3<<std::endl;
     busy = true;
     robEntry = RoBEntry_;
     calcType = calcType_;
@@ -129,20 +128,22 @@ void ReservationStation::Run() {
 
 void ReservationStation::loadUpdateBuffer() {
     if (updateBufferEntry == -1) return;
+//    std::cout<<"->loadUpdateBuffer, RS updating entry_"<<updateBufferEntry.read()<<" with value "<<updateBufferVal.read()<<std::endl;
     for (int i = 0; i < StationSize; i++)
         if (data[i].busy){
-            if (data[i].Qj == updateBufferEntry) {
+            if (data[i].Qj == updateBufferEntry.read()) {
                 data[i].Vj = updateBufferVal.read(); // damn it
-//                data[i].Vj = updateBufferVal;
+//                std::cout<<"->loadUpdateBuffer, RS updating entry_"<<i<<" with value "<<updateBufferVal.read()<<std::endl;
                 data[i].Qj = -1;
             }
-            if (data[i].Qk == updateBufferEntry) {
+            if (data[i].Qk == updateBufferEntry.read()) {
                 data[i].Vk = updateBufferVal.read();
-//                data[i].Vk = updateBufferVal;
+//                std::cout<<"->loadUpdateBuffer, RS updating entry_"<<i<<" with value "<<updateBufferVal.read()<<std::endl;
                 data[i].Qk = -1;
             }
         }
-    updateBufferEntry = -1;
+    if (updateBufferEntry.current() == updateBufferEntry.read())
+        updateBufferEntry = -1;
 }
 
 void ReservationStation::updateEntry(uint robEntry, uint value) {
