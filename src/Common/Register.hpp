@@ -19,6 +19,7 @@ public:
     void tick() { val = nxt; }
     operator T() { return val; }
     void operator=(T next) { nxt = next; }
+//    void operator=(Register<T> other) { nxt = other.val; }
 };
 
 #endif //RISC_V_SIMULATOR_REGISTER_HPP

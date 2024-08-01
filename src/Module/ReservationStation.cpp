@@ -53,7 +53,7 @@ ReservationStation::RSEntry::putInstruction(CalcType calcType_, DataSource dataS
 }
 
 void ReservationStation::tickRegister() {
-//    loadUpdateBuffer();
+    loadUpdateBuffer();
     flushFlag.tick(); updateBufferEntry.tick(); updateBufferVal.tick();
     for (int i = 0; i < StationSize; i++)
         data[i].tick();
@@ -80,7 +80,6 @@ void ReservationStation::Run() {
         flush();
         return;
     }
-
     for (int i = 0; i < StationSize; i++)
         if (data[i].busy && data[i].Qj == -1 && data[i].Qk == -1){
             // execute
@@ -111,7 +110,6 @@ void ReservationStation::Run() {
                         if (static_cast<int>((CalcType)data[i].calcType) == 17 || static_cast<int>((CalcType)data[i].calcType) == 18) unsignedFlag = 1;
                         result = lsb.load(length, data[i].A, unsignedFlag);
                         lsb.loadSuccess(data[i].Vj);
-//                      std::cout<<"Result: "<<result<<std::endl;
                         rob.updateEntry(data[i].robEntry, result);
                         data[i].busy = false;
                         // step 2 done
@@ -127,20 +125,20 @@ void ReservationStation::Run() {
             }
             break; // only one instruction can be executed in one cycle
         }
-    loadUpdateBuffer();
 }
 
 void ReservationStation::loadUpdateBuffer() {
     if (updateBufferEntry == -1) return;
-//    std::cout<<"->RS loading updateBufferEntry_"<<updateBufferEntry<<" with value "<<updateBufferVal<<std::endl;
     for (int i = 0; i < StationSize; i++)
-        if (data[i].busy.current()){
-            if (data[i].Qj.current() == updateBufferEntry) {
-                data[i].Vj = updateBufferVal;
+        if (data[i].busy){
+            if (data[i].Qj == updateBufferEntry) {
+                data[i].Vj = updateBufferVal.read(); // damn it
+//                data[i].Vj = updateBufferVal;
                 data[i].Qj = -1;
             }
-            if (data[i].Qk.current() == updateBufferEntry) {
-                data[i].Vk = updateBufferVal;
+            if (data[i].Qk == updateBufferEntry) {
+                data[i].Vk = updateBufferVal.read();
+//                data[i].Vk = updateBufferVal;
                 data[i].Qk = -1;
             }
         }

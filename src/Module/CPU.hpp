@@ -63,7 +63,7 @@ public:
 
             if (rob.Halted()) Exit();
 
-//            if (commit_cnt > 716) return;
+//            if (commit_cnt > 40) return;
         }
     }
 };
