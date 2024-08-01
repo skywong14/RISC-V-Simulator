@@ -24,6 +24,7 @@ std::string toString(RoBType type);
 
 class RoB {
 private:
+    static const bool commitDebugTag = false;
     ReservationStation& rs;
     BranchPredictor& bp;
     LSB& lsb;

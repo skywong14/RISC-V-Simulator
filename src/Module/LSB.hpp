@@ -9,15 +9,11 @@
 
 class LSB{
 private:
-    static const int BufferSize = 1;
+    static const int BufferSize = 2;
     Memory& mem;
     Register<uint> head, tail;
     Register<uint> busy[BufferSize];
-    Register<uint> mode[BufferSize]; // 0: store, 1: load unsigned, 2: load signed
-    Register<uint> addr[BufferSize];
-    Register<uint> length[BufferSize];
     Register<uint> ready[BufferSize];
-    Register<uint> value[BufferSize];
 public:
     Register<bool> flushFlag;
     explicit LSB(Memory& mem_);
@@ -30,13 +26,15 @@ public:
     void NotifyFlush();
 
     bool available(); //是否有空位
-    uint insertLoadCommand(uint unsignedFlag_, uint addr_, uint length_);
-    uint insertStoreCommand(uint addr_, uint length_);
+    uint insertLoadCommand();
+    uint insertStoreCommand();
     void Run();
     bool ableToLoad(uint entryId);
     bool ableToStore(uint entryId);
     void loadSuccess(uint entryId);
     void storeSuccess(uint entryId);
+
+    void debug();
 };
 
 #endif //RISC_V_SIMULATOR_LSB_HPP

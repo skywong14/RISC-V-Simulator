@@ -9,8 +9,8 @@
 int commit_cnt = 0;
 
 int main() {
-//    freopen("input.txt", "r", stdin);
-//    freopen("output.txt", "w", stdout);
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
     Memory mem;
     mem.load_memory_from_stream(std::cin);
     CPU cpu(mem);

@@ -98,6 +98,7 @@ void ReservationStation::Run() {
                 } else {
                     // load step 2
                     //now Vj stores the lsbEntryId
+//                    std::cout<<"Test able to Load entry_"<<data[i].Vj<<", calcType: "<<static_cast<int>(data[i].calcType.read())<<std::endl;
                     if (lsb.ableToLoad(data[i].Vj)) {
                         uint length = 0;
                         if (static_cast<int>((CalcType)data[i].calcType) == 14 || static_cast<int>((CalcType)data[i].calcType) == 17) length = 1;
@@ -139,7 +140,11 @@ void ReservationStation::updateEntry(uint robEntry, uint value) {
 }
 
 void ReservationStation::tick() {
-    if (flushFlag) flush();
+    if (flushFlag) {
+        flush();
+        tickRegister();
+        return;
+    }
     Run();
     tickRegister();
 //    PrintState(); // debug

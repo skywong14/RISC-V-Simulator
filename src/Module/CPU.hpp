@@ -15,6 +15,7 @@
 
 class CPU{
 private:
+    bool debugFlag = true;
     uint clock;
 public:
     bool halted;
@@ -30,7 +31,6 @@ public:
         halted = false;
     }
     void Exit(){
-//        std::cout<<"Exit~"<<std::endl;
         halted = true;
     }
     void Run(){
@@ -41,7 +41,7 @@ public:
             iq.tick();
             lsb.tick();
             rob.tick();
-            rf.tickAll();
+            rf.tick();
             bp.tick();
             rs.tick();
             alu.tick();
@@ -49,7 +49,16 @@ public:
 //            rf.debug();
 //            std::cout<<std::endl<<std::endl;
             if (rob.Halted()) Exit();
-//            if (commit_cnt > 18) halted = true;
+            if (commit_cnt  >=  1694 - 2 && false) {
+                std::cout<<"----------------"<<std::endl;
+                std::cout << "commit_cnt: " << commit_cnt << std::endl;
+                rob.printStatus();
+                lsb.debug();
+                rs.PrintState();
+                rf.debug();
+                std::cout<<"----------------"<<std::endl;
+//                debugFlag = false;
+            }
         }
     }
 };

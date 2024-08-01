@@ -30,6 +30,7 @@ class InstructionQueue{
 public:
     Register<uint> PC;
     Register<uint> flushPC;
+    Register<bool> flushFlag;
 
     InstructionQueue(ReservationStation& rs_, RoB& rob_, LSB& lsb_, BranchPredictor& bp_);
 

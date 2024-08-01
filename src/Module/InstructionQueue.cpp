@@ -5,7 +5,7 @@
 
 InstructionQueue::InstructionQueue(ReservationStation &rs_, RoB &rob_, LSB &lsb_, BranchPredictor &bp_): rs(rs_), rob(rob_), lsb(lsb_), bp(bp_) {
     head = 0; tail = 0;
-    PC = 0;
+    PC = 0; flushPC = 0; flushFlag = false;
     for (int i = 0; i < queueSize; i++){
         busy[i] = false;
     }
@@ -18,7 +18,7 @@ void InstructionQueue::flushOldPC(uint value) {
 }
 
 void InstructionQueue::tickRegister() {
-    head.tick(); tail.tick(); PC.tick(); flushPC.tick();
+    head.tick(); tail.tick(); PC.tick(); flushPC.tick(); flushFlag.tick();
     for (int i = 0; i < queueSize; i++) {
         busy[i].tick();
         instructions[i].tick();
@@ -28,11 +28,10 @@ void InstructionQueue::tickRegister() {
 }
 
 void InstructionQueue::flush() {
-    head = 0; tail = 0;
+    head = 0; tail = 0; flushFlag = false;
     for (int i = 0; i < queueSize; i++)
         busy[i] = false;
     PC = flushPC;
-    tickRegister();
 }
 
 void InstructionQueue::newInstruction() {
@@ -88,13 +87,13 @@ void InstructionQueue::executeInstruction(){
         if (!lsb.available()) return; // wait
         uint lsbEntryId;
         if (instruction.opcode == Opcode::SB) {
-            lsbEntryId = lsb.insertStoreCommand(instruction.rs1, 1);
+            lsbEntryId = lsb.insertStoreCommand();
             robEntry = rob.insertEntry(RoBType::STOREB, lsbEntryId, instruction.rd, cur_PC);
         } else if (instruction.opcode == Opcode::SH) {
-            lsbEntryId = lsb.insertStoreCommand(instruction.rs1, 2);
+            lsbEntryId = lsb.insertStoreCommand();
             robEntry = rob.insertEntry(RoBType::STOREH, lsbEntryId, instruction.rd, cur_PC);
         } else if (instruction.opcode == Opcode::SW) {
-            lsbEntryId = lsb.insertStoreCommand(instruction.rs1, 4);
+            lsbEntryId = lsb.insertStoreCommand();
             robEntry = rob.insertEntry(RoBType::STOREW, lsbEntryId, instruction.rd, cur_PC);
         }
     } else if (OpValue(instruction.opcode) == 0x03){
@@ -102,22 +101,8 @@ void InstructionQueue::executeInstruction(){
         // lsbEntryId stored in rob.value
         if (!lsb.available()) return; // wait
         uint lsbEntryId;
-        if (instruction.opcode == Opcode::LB) {
-            lsbEntryId = lsb.insertLoadCommand(0, 0, 1);
-            robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
-        } else if (instruction.opcode == Opcode::LH) {
-            lsbEntryId = lsb.insertLoadCommand(0, 0, 2);
-            robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
-        } else if (instruction.opcode == Opcode::LW) {
-            lsbEntryId = lsb.insertLoadCommand(0, 0, 4);
-            robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
-        } else if (instruction.opcode == Opcode::LBU) {
-            lsbEntryId = lsb.insertLoadCommand(1, 0, 1);
-            robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
-        } else if (instruction.opcode == Opcode::LHU) {
-            lsbEntryId = lsb.insertLoadCommand(1, 0, 2);
-            robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
-        }
+        lsbEntryId = lsb.insertLoadCommand();
+        robEntry = rob.insertEntry(RoBType::REGISTER, lsbEntryId, instruction.rd, cur_PC);
     } else if (instruction.opcode == Opcode::JALR){
         robEntry = rob.insertEntry(RoBType::JALR, 0, instruction.rd, cur_PC);
     } else if (instruction.opcode == Opcode::JAL){
@@ -251,11 +236,16 @@ void InstructionQueue::Run() {
 }
 
 void InstructionQueue::tick() {
+    if (flushFlag) {
+        flush();
+        tickRegister();
+        return;
+    }
     tickRegister();
     Run();
 }
 
 void InstructionQueue::NotifyFlush() {
-    flush();
+    flushFlag = true;
 }
 

@@ -4,7 +4,11 @@
 #include "ReorderBuffer.hpp"
 
 void RoB::tick() {
-    if (flushFlag) flush();
+    if (flushFlag){
+        flush();
+        tickRegister();
+        return;
+    }
     commitEntry();
     tickRegister();
 }
@@ -103,7 +107,8 @@ void RoB::commitEntry() {
                 haltFlag = true; //throw std::runtime_error("Exit~");
                 break;
         }
-//        commitDebug();
+        if (commitDebugTag)
+            commitDebug();
         head = (head + 1) % Size;
         entries[head].busy = false; entries[head].ready = false;
         if (flushNow) flushAll();

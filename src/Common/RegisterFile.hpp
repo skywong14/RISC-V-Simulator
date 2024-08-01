@@ -42,15 +42,17 @@ public:
     }
     void flush(){
         for (int i = 0; i < REG_NUM; ++i) {
-            registers[i] = 0;
             busy[i] = false;
             tag[i] = 0;
         }
         flushFlag = false;
     }
     void tick(){
-        if (flushFlag) flush();
-        //Run;
+        if (flushFlag) {
+            flush();
+            tickAll();
+            return;
+        }
         tickAll();
     }
 
