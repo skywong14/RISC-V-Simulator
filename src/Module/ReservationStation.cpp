@@ -128,17 +128,14 @@ void ReservationStation::Run() {
 
 void ReservationStation::loadUpdateBuffer() {
     if (updateBufferEntry == -1) return;
-//    std::cout<<"->loadUpdateBuffer, RS updating entry_"<<updateBufferEntry.read()<<" with value "<<updateBufferVal.read()<<std::endl;
     for (int i = 0; i < StationSize; i++)
         if (data[i].busy){
             if (data[i].Qj == updateBufferEntry.read()) {
                 data[i].Vj = updateBufferVal.read(); // damn it
-//                std::cout<<"->loadUpdateBuffer, RS updating entry_"<<i<<" with value "<<updateBufferVal.read()<<std::endl;
                 data[i].Qj = -1;
             }
             if (data[i].Qk == updateBufferEntry.read()) {
                 data[i].Vk = updateBufferVal.read();
-//                std::cout<<"->loadUpdateBuffer, RS updating entry_"<<i<<" with value "<<updateBufferVal.read()<<std::endl;
                 data[i].Qk = -1;
             }
         }
@@ -147,7 +144,6 @@ void ReservationStation::loadUpdateBuffer() {
 }
 
 void ReservationStation::updateEntry(uint robEntry, uint value) {
-//    std::cout<<"->RS updating entry_"<<robEntry<<" with value "<<value<<std::endl;
     updateBufferEntry = robEntry;
     updateBufferVal = value;
     for (int i = 0; i < StationSize; i++)
@@ -171,7 +167,6 @@ void ReservationStation::tick() {
     }
     Run();
     tickRegister();
-//    PrintState(); // debug
 }
 
 ReservationStation::ReservationStation(ALU &alu_, RegisterFile &rf_, RoB &rob_, LSB& lsb_): alu(alu_), rf(rf_), rob(rob_), lsb(lsb_){

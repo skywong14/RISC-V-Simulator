@@ -33,7 +33,7 @@ private:
 public:
     Register<bool> haltFlag;
     Register<bool> flushFlag;
-    static const int Size = 10;
+    static const int Size = 16;
     struct RoBEntry {
         Register<RoBType> type;  // 计算指令
         Register<uint> dest; // 目的寄存器 or 目标内存地址

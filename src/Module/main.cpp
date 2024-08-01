@@ -2,12 +2,11 @@
 // Created by skywa on 2024/7/26.
 //
 #include <iostream>
-#include "../Common/Memory.hpp"
-#include "Decoder.hpp"
+#include "Common/Memory.hpp"
 #include "CPU.hpp"
 
-int commit_cnt = 0;
-int clock_cnt = 0;
+//int commit_cnt = 0;
+//int clock_cnt = 0;
 
 int main() {
 //    freopen("input.txt", "r", stdin);

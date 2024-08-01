@@ -16,7 +16,7 @@ class ReservationStation;
 class RoB;
 
 class InstructionQueue{
-    static const int queueSize = 10;
+    static const int queueSize = 16;
     Register<uint> head, tail;
     Register<uint> instructions[queueSize];
     Register<uint> curPC[queueSize];

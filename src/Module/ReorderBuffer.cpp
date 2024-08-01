@@ -99,7 +99,6 @@ void RoB::commitEntry() {
             case RoBType::JALR:
                 rf.writeRegister(entries[head].dest, entries[head].PC + 4, head);
                 rs.updateEntry(head, entries[head].PC + 4);
-//                std::cout<<"[JALR] new PC: "<<entries[head].value<<std::endl;
                 iq.flushOldPC(entries[head].value); // value = rs1 + imm
                 flushAll();
                 break;
@@ -196,9 +195,8 @@ std::string toString(RoBType type){
     return "UNKNOWN";
 }
 void RoB::commitDebug() {
-    extern int commit_cnt;
-    commit_cnt++;
-    std::cout<<"[Commit] "<<commit_cnt<<std::endl;
+    // extern int commit_cnt;  commit_cnt++;
+    // std::cout<<"[Commit] "<<commit_cnt<<std::endl;
     std::cout << "Commit Entry: " << head.read() << std::endl;
     std::cout << "    Type: " << toString(entries[head].type) << std::endl;
     std::cout << "    Dest: " << entries[head].dest.read() << std::endl;
@@ -219,7 +217,6 @@ void RoB::flush() {
 }
 
 void RoB::flushAll() {
-//    std::cout<<"[Flush All]"<<std::endl;
     rf.NotifyFlush();
     iq.NotifyFlush();
     rs.NotifyFlush();

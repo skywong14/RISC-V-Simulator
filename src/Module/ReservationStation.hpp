@@ -32,7 +32,7 @@ public:
     Register<int> updateBufferEntry;
     Register<uint> updateBufferVal;
     Register<bool> flushFlag;
-    static const int StationSize = 10;
+    static const int StationSize = 16;
     struct RSEntry{
         Register<CalcType> calcType;
         Register<Opcode> opcode;

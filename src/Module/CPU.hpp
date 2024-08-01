@@ -38,8 +38,8 @@ public:
         extern int clock_cnt;
         while (!halted){
             clock++;
-            clock_cnt++;
-//            std::cout<<"-----Clock "<<clock<<"-----"<<std::endl;
+            // clock_cnt++;
+            // std::cout<<"-----Clock "<<clock<<"-----"<<std::endl;
             iq.Run();
             rs.Run();
             lsb.Run();
@@ -62,8 +62,6 @@ public:
 //            std::cout<<std::endl<<std::endl;
 
             if (rob.Halted()) Exit();
-
-//            if (commit_cnt > 40) return;
         }
     }
 };
