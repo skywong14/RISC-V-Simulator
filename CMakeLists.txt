@@ -20,7 +20,6 @@ add_executable(code
         src/Common/utils.hpp
         src/Module/InstructionQueue.hpp
         src/Module/BranchPredictor.hpp
-        src/Common/CDB.hpp
         src/Module/InstructionQueue.cpp
         src/Module/LSB.cpp
         src/Module/ReorderBuffer.cpp
