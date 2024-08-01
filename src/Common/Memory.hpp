@@ -31,12 +31,7 @@ public:
 
     void write_byte(uint addr, uint imm);
 
-    void display_memory(uint beg_addr, uint end_addr);
-
     void load_memory_from_stream(std::istream &is);
 };
-
-
-
 
 #endif //RISC_V_SIMULATOR_MEMORY_HPP

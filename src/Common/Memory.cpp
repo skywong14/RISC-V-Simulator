@@ -68,12 +68,3 @@ void Memory::load_memory_from_stream(std::istream &is) {
         }
     }
 }
-
-// 从地址 beg_addr 到 end_addr 的内存数据
-void Memory::display_memory(uint beg_addr, uint end_addr) {
-    std::cout << "Memory: from " << beg_addr << " to " << end_addr << std::endl;
-    for (uint i = beg_addr; i <= end_addr; i++) {
-        std::cout << std::hex << (unsigned) mem[i] << " ";
-    }
-    std::cout << std::endl;
-}

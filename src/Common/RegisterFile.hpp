@@ -10,14 +10,13 @@
 #include <iostream>
 #include <iomanip>
 using uint = unsigned int;
-// Register File存放着将要向此寄存器更新值的ROB entry tag
-// 如果为0，代表此寄存器的值可用，否则，意味着该寄存器的值会被前面的指令更新，用该寄存器作为源操作数的需要等待CDB将更新后的值传输过来。
+
 class RegisterFile {
 private:
     static const int REG_NUM = 32;
     Register<uint> registers[REG_NUM];
     Register<int> tag[REG_NUM]; // 对应的 ROB 条目
-    Register<bool> busy[REG_NUM];  // 寄存器是否busy(等待写回)
+    Register<bool> busy[REG_NUM];  // 寄存器是否busy
     Register<bool> flushFlag; // true if flush is needed
     Register<bool> writeTag[REG_NUM], clearTag[REG_NUM]; // true if flush is needed
 public:
@@ -37,7 +36,7 @@ public:
         flushFlag.tick();
         for (int i = 0; i < REG_NUM; i++){
             writeTag[i].tick(); clearTag[i].tick();
-            if (writeTag[i]) { //writeTag优先级最高
+            if (writeTag[i]) { // writeTag优先级最高
                 busy[i] = true;
             } else if (clearTag[i]) {
                 busy[i] = false;
@@ -93,8 +92,6 @@ public:
         registers[reg] = value;
         if (busy[reg] && tag[reg] == robEntry) {
             clearTag[reg] = true;
-//            busy[reg] = false;
-//            tag[reg] = -1;
         }
     }
     void updateRegisterStatus(uint reg, int robEntry) {
@@ -120,11 +117,8 @@ public:
                       << "Val=0x" << std::hex << std::setw(8) << std::setfill('0') << registers[i]
                       << ", busy=" << (busy[i] ? "true" : "false")
                       << ", Tag=" << std::dec <<tag[i] << "\n";
-            //恢复十进制
-
         }
     }
 };
-
 
 #endif //RISC_V_SIMULATOR_REGISTERFILE_HPP
